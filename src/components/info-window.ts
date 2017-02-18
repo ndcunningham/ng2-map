@@ -19,12 +19,11 @@ const INPUTS = [
   'content', 'disableAutoPan', 'maxWidth', 'pixelOffset', 'position', 'zIndex', 'options'
 ];
 const OUTPUTS = [
-  'infoWindowCloseclick', 'infoWindowContentChanged', 'infoWindowDomready',
-  'infoWindowPositionChanged', 'infoWindowZindexChanged'
+  'closeclick', 'content_changed', 'domready', 'position_changed', 'zindex_changed'
 ];
 
 @Component({
-  selector: 'ng2-map>info-window',
+  selector: 'ng2-map > info-window',
   inputs: INPUTS,
   outputs: OUTPUTS,
   template: `<ng-content></ng-content>`,
@@ -67,7 +66,7 @@ export class InfoWindow implements OnInit, OnChanges, OnDestroy {
 
     this.objectOptions = this.ng2MapComponent.optionBuilder.googlizeAllInputs(INPUTS, this);
     this.infoWindow = new google.maps.InfoWindow(this.objectOptions);
-    this.infoWindow['mapObjectName'] = this.constructor['name'];
+    this.infoWindow['mapObjectName'] = 'InfoWindow';
     console.log('INFOWINDOW objectOptions', this.objectOptions);
 
     // register infoWindow ids to Ng2Map, so that it can be opened by id
@@ -86,6 +85,7 @@ export class InfoWindow implements OnInit, OnChanges, OnDestroy {
       .debounceTime(1000)
       .subscribe((changes: SimpleChanges) => this.ng2Map.updateGoogleObject(this.infoWindow, changes));
 
+    this.ng2MapComponent.addToMapObjectGroup('InfoWindow', this.infoWindow);
     this.initialized$.emit(this.infoWindow);
   }
 

@@ -10,6 +10,8 @@ var ng2_map_component_1 = require('../components/ng2-map.component');
 var INPUTS = [
     'center', 'clickable', 'draggable', 'editable', 'fillColor', 'fillOpacity', 'map', 'radius',
     'strokeColor', 'strokeOpacity', 'strokePosition', 'strokeWeight', 'visible', 'zIndex', 'options',
+    //ng2-map specific inputs
+    'geoFallbackCenter'
 ];
 var OUTPUTS = [
     'centerChanged', 'click', 'dblclick', 'drag', 'dragend', 'dragstart',
@@ -29,22 +31,28 @@ var Circle = (function (_super) {
     Circle.prototype.setCenter = function () {
         var _this = this;
         if (!this['center']) {
-            this.ng2MapComp.geolocation.getCurrentPosition().subscribe(function (center) {
+            this._subscriptions.push(this.ng2MapComp.geolocation.getCurrentPosition().subscribe(function (center) {
                 console.log('setting circle center from current location');
                 var latLng = new google.maps.LatLng(center.coords.latitude, center.coords.longitude);
                 _this.mapObject.setCenter(latLng);
-            });
+            }, function (error) {
+                console.error('ng2-map, error in finding the current position');
+                _this.mapObject.setCenter(_this.objectOptions['geoFallbackCenter'] || new google.maps.LatLng(0, 0));
+            }));
         }
         else if (typeof this['center'] === 'string') {
-            this.ng2MapComp.geoCoder.geocode({ address: this['center'] }).subscribe(function (results) {
+            this._subscriptions.push(this.ng2MapComp.geoCoder.geocode({ address: this['center'] }).subscribe(function (results) {
                 console.log('setting circle center from address', _this['center']);
                 _this.mapObject.setCenter(results[0].geometry.location);
-            });
+            }, function (error) {
+                console.error('ng2-map, error in finding location from', _this['center']);
+                _this.mapObject.setCenter(_this.objectOptions['geoFallbackCenter'] || new google.maps.LatLng(0, 0));
+            }));
         }
     };
     Circle.decorators = [
         { type: core_1.Directive, args: [{
-                    selector: 'ng2-map>circle',
+                    selector: 'ng2-map>circle, ng2-map>map-circle',
                     inputs: INPUTS,
                     outputs: OUTPUTS,
                 },] },

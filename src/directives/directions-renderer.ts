@@ -32,6 +32,10 @@ export class DirectionsRenderer extends BaseMapDirective {
   // only called when map is ready
   initialize(): void {
     this.objectOptions = this.optionBuilder.googlizeAllInputs(this.inputs, this);
+    if (typeof this.objectOptions['panel'] === 'string') { // find a Node for panel
+      this.objectOptions['panel'] = document.querySelector(this.objectOptions['panel']);
+    }
+
     console.log('DirectionsRenderer', 'initialization options', this.objectOptions, this.directionsRequest);
 
     this.directionsService = new google.maps.DirectionsService();
@@ -43,6 +47,8 @@ export class DirectionsRenderer extends BaseMapDirective {
     this.showDirections(this.directionsRequest);
 
     this.ng2Map.setObjectEvents(this.outputs, this, 'directionsRenderer');
+
+    this.ng2MapComponent.addToMapObjectGroup(this.mapObjectName, this.mapObject);
     this.initialized$.emit(this.directionsRenderer);
   }
 

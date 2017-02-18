@@ -71,7 +71,7 @@ var OptionBuilder = (function () {
             else if (options['key'] === 'icons') {
                 output = this.getMapIcons(output);
             }
-            else if (options['key'] === 'position') {
+            else if (options['key'] === 'position' || options['key'].match(/^geoFallback/)) {
                 output = this.getLatLng(output);
             }
         }
@@ -124,8 +124,7 @@ var OptionBuilder = (function () {
         if (input.match(/^[A-Z][a-zA-Z0-9]+\(.*\)$/)) {
             try {
                 var exp = 'new google.maps.' + input;
-                // tslint:disable-next-line
-                output = eval(exp);
+                output = Function("return new google.maps." + input + ";")();
             }
             catch (e) { }
         }

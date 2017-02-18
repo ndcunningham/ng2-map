@@ -9,12 +9,14 @@ var base_map_directive_1 = require('./base-map-directive');
 var ng2_map_component_1 = require('../components/ng2-map.component');
 var INPUTS = [
     'anchorPoint', 'animation', 'clickable', 'cursor', 'draggable', 'icon', 'label', 'opacity',
-    'optimized', 'place', 'position', 'shape', 'title', 'visible', 'zIndex', 'options'
+    'optimized', 'place', 'position', 'shape', 'title', 'visible', 'zIndex', 'options',
+    //ng2-map specific inputs
+    'geoFallbackPosition'
 ];
 var OUTPUTS = [
     'animationChanged', 'click', 'clickableChanged', 'cursorChanged', 'dblclick', 'drag', 'dragend', 'draggableChanged',
     'dragstart', 'flatChanged', 'iconChanged', 'mousedown', 'mouseout', 'mouseover', 'mouseup', 'positionChanged', 'rightclick',
-    'dhapeChanged', 'titleChanged', 'visibleChanged', 'zindexChanged'
+    'shapeChanged', 'titleChanged', 'visibleChanged', 'zindexChanged'
 ];
 var Marker = (function (_super) {
     __extends(Marker, _super);
@@ -30,19 +32,23 @@ var Marker = (function (_super) {
     Marker.prototype.setPosition = function () {
         var _this = this;
         if (!this['position']) {
-            this.ng2MapComp.geolocation.getCurrentPosition().subscribe(function (position) {
+            this._subscriptions.push(this.ng2MapComp.geolocation.getCurrentPosition().subscribe(function (position) {
                 console.log('setting marker position from current location');
                 var latLng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-                // console.log('this.marker', this.marker);
                 _this.mapObject.setPosition(latLng);
-            });
+            }, function (error) {
+                console.error('ng2-map, error finding the current location');
+                _this.mapObject.setPosition(_this.objectOptions['geoFallbackPosition'] || new google.maps.LatLng(0, 0));
+            }));
         }
         else if (typeof this['position'] === 'string') {
-            this.ng2MapComp.geoCoder.geocode({ address: this['position'] }).subscribe(function (results) {
+            this._subscriptions.push(this.ng2MapComp.geoCoder.geocode({ address: this['position'] }).subscribe(function (results) {
                 console.log('setting marker position from address', _this['position']);
-                // console.log('this.marker', this.marker);
                 _this.mapObject.setPosition(results[0].geometry.location);
-            });
+            }, function (error) {
+                console.error('ng2-map, error finding the location from', _this['position']);
+                _this.mapObject.setPosition(_this.objectOptions['geoFallbackPosition'] || new google.maps.LatLng(0, 0));
+            }));
         }
     };
     Marker.decorators = [

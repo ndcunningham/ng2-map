@@ -79,7 +79,7 @@ export class OptionBuilder {
       else if (options['key'] === 'icons') {
         output = this.getMapIcons(output);
       }
-      else if (options['key'] === 'position') {
+      else if (options['key'] === 'position' || (<string>options['key']).match(/^geoFallback/) ) {
         output = this.getLatLng(output);
       }
     } else if (options['key'] && output instanceof Object) {
@@ -136,8 +136,7 @@ export class OptionBuilder {
     if (input.match(/^[A-Z][a-zA-Z0-9]+\(.*\)$/)) {
       try {
         let exp = 'new google.maps.' + input;
-        // tslint:disable-next-line
-        output = eval(exp);
+        output = Function(`return new google.maps.${input};`)()
       } catch (e) {}
     }
     return output;

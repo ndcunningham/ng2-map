@@ -22,7 +22,7 @@ export class PlacesAutoComplete  {
     public optionBuilder: OptionBuilder,
     public elementRef: ElementRef
   ) {
-    if (typeof google === 'undefined' || !google.maps.Map) {
+    if (typeof google === 'undefined' || typeof google.maps === 'undefined' || !google.maps.Map) {
       this.addGoogleMapsApi();
     } else {
       this.initialize();
@@ -41,13 +41,14 @@ export class PlacesAutoComplete  {
     );
     console.log('this.autocomplete', this.autocomplete);
 
-    this.initialized$.emit(this.autocomplete);
     this.autocomplete.addListener('place_changed', place => this.place_changed.emit());
+
+    this.initialized$.emit(this.autocomplete);
   };
 
   addGoogleMapsApi(): void {
     window['initializePlacesAutoComplete'] = this.initialize;
-    if (!window['google'] && !document.querySelector('#ng2-map-api')) {
+    if ((!window['google'] || !window['google']['maps']) && !document.querySelector('#ng2-map-api')) {
       let script = document.createElement( 'script' );
       script.id = 'ng2-map-api';
 

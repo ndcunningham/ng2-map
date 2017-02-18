@@ -1,8 +1,13 @@
 # ng2-map
 
+[![Build Status](https://travis-ci.org/ng2-ui/ng2-map.svg?branch=master)](https://travis-ci.org/ng2-ui/ng2-map)
+[![Join the chat at https://gitter.im/ng2-ui/ng2-map](https://badges.gitter.im/ng2-ui/ng2-map.svg)](https://gitter.im/ng2-ui/ng2-map?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Angular2 Google Map ([ng-map](https://ngmap.github.io) version 2)
 
 * **[![Imgur](http://i.imgur.com/O2EOCxf.png)](https://rawgit.com/ng2-ui/ng2-map/master/app/index.html)**		
+* [Plunker Example](https://plnkr.co/edit/6e1qWK?p=preview)
+* [Place Auto Complete Plunker Example](https://plnkr.co/edit/n3aELSNoOZKThjkCHDJ3?p=preview)
 
 ### Design Principle
 
@@ -12,7 +17,7 @@ Angular2 Google Map ([ng-map](https://ngmap.github.io) version 2)
 
 2. **Expose all original Google Maps V3 api to the user without any exception.**
 
-   No hiding, nor manipulation. By doing so, programmers don't need to learnthis module.
+   No hiding, nor manipulation. By doing so, programmers don't need to learn any about this convenient module.
    If you know Google Maps V3 API, there shouldn't be no problem using this module.
 
 ### Usage
@@ -21,7 +26,7 @@ Angular2 Google Map ([ng-map](https://ngmap.github.io) version 2)
 
         $ npm install ng2-map @types/google-maps --save
 
-2. For SystemJs users only, update `system.config.js` to recognize ng2-map.
+2. _For SystemJs users only_, update `system.config.js` to recognize ng2-map.
 
         map['ng2-map'] = 'node_modules/ng2-map/dist';
         packages['ng2-map'] = { main: 'ng2-map.umd.js', defaultExtension: 'js' }
@@ -36,24 +41,16 @@ Angular2 Google Map ([ng-map](https://ngmap.github.io) version 2)
         import { Ng2MapModule} from 'ng2-map';
 
         @NgModule({
-          imports: [BrowserModule, FormsModule, Ng2MapModule],
+          imports: [
+            BrowserModule, 
+            FormsModule, 
+            Ng2MapModule.forRoot({apiUrl: 'https://maps.google.com/maps/api/js?key=MY_GOOGLE_API_KEY')
+          ],
           declarations: [AppComponent],
           bootstrap: [ AppComponent ]
         })
         export class AppModule { }
 
-4. Your Google maps may require API key, then override `apiUrl`
-
-        import { Component } from '@angular/core';
-        import { Ng2MapComponent } from 'ng2-map';
-
-        @Component({ ... })
-        export class AppComponent {
-
-          constructor() {
-            Ng2MapComponent['apiUrl'] = 'https://maps.google.com/maps/api/js?key=XXXXXXXXXXXXXXXXXXXXXXXXXX';
-          }
-        }
 
 ## Use it in your template
 
@@ -68,64 +65,54 @@ or,
 For full example, please check out `app` directory to see the example of;
 
   - `main.ts`
-  -  and `app.component.ts`.
+  -  and `app/map-components`.
 
-## How to get instance of a map
- 
-When map is ready Ng2MapComonent fires mapReady$ event with `map` object
+## How to get a instance(s) of a map or markers
+
+* Ng2MapComponent fires `mapReady$` event with `map` object
+* Each ng2-map directives fires `initialized$` event with its Google map object, e.g. google.maps.Marker
+* Other way is to get a map object is to any event. All event has `target` value, which is a Google map object.
 
 ```HTML
-<ng2-map zoom="13" center="37.775, -122.434" mapTypeId="satellite">
+<ng2-map 
+  zoom="13" 
+  center="37.775, -122.434" 
+  (mapReady$)="onMapReady($event)"
+  (mapClick)="onMapClick($event)"
+  (idle)="onIdle($event)"
+  mapTypeId="satellite">
+    <marker *ngFor="let pos of positions" 
+      [position]="pos"
+      (initialized$)="onMarkerInit($event)"></marker>
 </ng2-map>
 ```
 
 In your app component, 
 
 ```TypeScript
-import {Ng2MapComponent} from "ng2-map";
-
 export class MyAppComponent {
-  @ViewChild(Ng2MapComponent) ng2MapComponent: Ng2MapComponent;
-  pulic map: google.maps.Map;
-  ngOnInit() {
-    this.ng2MapComponent.mapReady$.subscribe(map => {
-      this.map = map;
-    })
+  onMapReady(map) {
+    console.log('map', map);
+    console.log('markers', map.markers);  // to get all markers as an array 
   }
-}
-```
-
-## How to get instance of a map object
-
-When any map directive is initialized, each directive  fires initialized$ event with its object.
-For HTML like the following, 
-```HTML
-<ng2-map zoom="13" center="37.775, -122.434" mapTypeId="satellite">
-  <marker position="37.775, -122.434"></marker>
-</ng2-map>
-```
-
-In your app component, use initialized$ event of a map object component, which is a ViewChild
-
-```TypeScript
-import {Marker} from "ng2-map";
-
-export class MyAppComponent {
-  @ViewChild(Marker) marker: Marker;
-  pulic marker: google.maps.Marker;
-  ngOnInit() {
-    this.Maker.initialized$.subscribe(marker => {
-      this.marker = marker;
-    })
+  onIdle(event) {
+    console.log('map', event.target);
+  }
+  onMarkerInit(marker) {
+    console.log('marker', marker);
+  }
+  onMapClick(event) {
+    this.positions.push(event.latLng);
+    event.target.panTo(event.latLng);
   }
 }
 ```
 
 ## Need Contributors
  
-This `ng2-map` module is only improved and maintained by contributors like you;
+This `ng2-map` module is only improved and maintained by volunteers like you;
 
-As a contributor, it's NOT required to be skilled in Javascript nor Angular2.
+As a volunteer, it's NOT required to be skilled in Javascript nor Angular2.
 It’s required to be open-minded and interested in helping others.
 You can contribute to the following;
 
@@ -217,16 +204,27 @@ please send me email to `allenhwkim AT gmail.com` with your github id.
       <td> <a href="https://developers.google.com/maps/documentation/javascript/examples/streetview-embed">Google Streetview Example</a> <br/>
            <a href="https://rawgit.com/ng2-ui/ng2-map/master/app/index.html#/street-view-panorama">ng2-map streetview-panorama example</a>
   <tr><td> <a href="https://developers.google.com/maps/documentation/javascript/reference#AutoComplete">AutoComplete</a>
-      <td> <a href="https://developers.google.com/maps/documentation/javascript/reference#AutoCompleteOptions">AutoComplete</a>
+      <td> <a href="https://developers.google.com/maps/documentation/javascript/reference#AutoCompleteOptions">AutoComplete Options</a>
       <td> <a href="https://developers.google.com/maps/documentation/javascript/reference#AutoComplete">AutoComplete Events</a>
       <td> <a href="https://developers.google.com/maps/documentation/javascript/examples/places-autocomplete">Google Places Autocomplete Example</a> <br/>
            <a href="https://rawgit.com/ng2-ui/ng2-map/master/app/index.html#/palces-auto-complete">ng2-map places-auto-complete example</a>
   <tr><td> <a href="https://developers.google.com/maps/documentation/javascript/reference#DirectionsRenderer">DirectionsRenderer</a>
-      <td> <a href="https://developers.google.com/maps/documentation/javascript/reference#DirectionsRendererOptions">DirectionsRenderer</a>
+      <td> <a href="https://developers.google.com/maps/documentation/javascript/reference#DirectionsRendererOptions">DirectionsRenderer Options</a>
       <td> <a href="https://developers.google.com/maps/documentation/javascript/reference#DirectionsRenderer">DirectionsRenderer Events</a>
       <td> <a href="https://developers.google.com/maps/documentation/javascript/examples/directions-complex">Google Directions Example</a> <br/>
            <a href="https://rawgit.com/ng2-ui/ng2-map/master/app/index.html#/directions-renderer">ng2-map directions-renderer example</a> 
+  <tr><td> <a href="https://developers.google.com/maps/documentation/javascript/reference#DrawingManager">DrawingManager</a>
+      <td> <a href="https://developers.google.com/maps/documentation/javascript/reference#DrawingManagerOptions">DrawingManager Options</a>
+      <td> <a href="https://developers.google.com/maps/documentation/javascript/reference#DrawingManager">DrawingManager Events</a>
+      <td> <a href="https://developers.google.com/maps/documentation/javascript/examples/drawing-tools">Google Drawing Manager Example</a> <br/>
+           <a href="https://rawgit.com/ng2-ui/ng2-map/master/app/index.html#/drawing-manager">ng2-map drawing-manager example</a> 
 </table>
+
+### Custom Directives
+
+* custom-marker
+  * properties: position
+  * event: all marker events.
 
 ### For Developers
 

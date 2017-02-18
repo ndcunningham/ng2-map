@@ -23,6 +23,9 @@ var DirectionsRenderer = (function (_super) {
     // only called when map is ready
     DirectionsRenderer.prototype.initialize = function () {
         this.objectOptions = this.optionBuilder.googlizeAllInputs(this.inputs, this);
+        if (typeof this.objectOptions['panel'] === 'string') {
+            this.objectOptions['panel'] = document.querySelector(this.objectOptions['panel']);
+        }
         console.log('DirectionsRenderer', 'initialization options', this.objectOptions, this.directionsRequest);
         this.directionsService = new google.maps.DirectionsService();
         this.directionsRenderer = new google.maps.DirectionsRenderer(this.objectOptions);
@@ -30,6 +33,7 @@ var DirectionsRenderer = (function (_super) {
         // set google events listeners and emidirectionsRenderer to this outputs listeners
         this.showDirections(this.directionsRequest);
         this.ng2Map.setObjectEvents(this.outputs, this, 'directionsRenderer');
+        this.ng2MapComponent.addToMapObjectGroup(this.mapObjectName, this.mapObject);
         this.initialized$.emit(this.directionsRenderer);
     };
     DirectionsRenderer.prototype.ngOnChanges = function (changes) {

@@ -8,15 +8,19 @@ import {
   EventEmitter,
   SimpleChanges,
   AfterViewInit,
- } from '@angular/core';
+  Inject,
+  Output,
+  Optional
+} from '@angular/core';
 
 import { OptionBuilder } from '../services/option-builder';
 import { NavigatorGeolocation } from '../services/navigator-geolocation';
+import { NG_MAP_CONFIG_TOKEN } from '../services/config';
 import { GeoCoder } from '../services/geo-coder';
 import { Ng2Map } from '../services/ng2-map';
 import { Subject } from 'rxjs/Subject';
 import 'rxjs/add/operator/debounceTime';
-import { IJson } from '../services/util';
+import { IJson, toCamelCase } from '../services/util';
 
 const INPUTS = [
   'backgroundColor', 'center', 'disableDefaultUI', 'disableDoubleClickZoom', 'draggable', 'draggableCursor',
@@ -24,13 +28,17 @@ const INPUTS = [
   'noClear', 'overviewMapControl', 'panControl', 'panControlOptions', 'rotateControl', 'scaleControl', 'scrollwheel',
   'streetView', 'styles', 'tilt', 'zoom', 'streetViewControl', 'zoomControl', 'mapTypeControlOptions',
   'overviewMapControlOptions', 'rotateControlOptions', 'scaleControlOptions', 'streetViewControlOptions',
-  'options'
+  'options',
+  // ng2-map-specific inputs
+  'geoFallbackCenter'
 ];
 
 const OUTPUTS = [
-  'mapBoundsChanged', 'mapCenterChanged', 'mapClick', 'mapDblclick', 'mapDrag', 'mapDragend', 'mapDragstart', 'mapHeadingChanged', 'mapIdle',
-  'mapTypeidChanged', 'mapMousemove', 'mapMouseout', 'mapMouseover', 'mapProjectionChanged', 'mapResize', 'mapRightclick',
-  'mapTilesloaded', 'mapTileChanged', 'mapZoomChanged'
+  'bounds_changed', 'center_changed', 'click', 'dblclick', 'drag', 'dragend', 'dragstart', 'heading_changed', 'idle',
+  'typeid_changed', 'mousemove', 'mouseout', 'mouseover', 'projection_changed', 'resize', 'rightclick',
+  'tilesloaded', 'tile_changed', 'zoom_changed',
+  // to avoid DOM event conflicts
+  'mapClick', 'mapMouseover', 'mapMouseout', 'mapMousemove', 'mapDrag', 'mapDragend', 'mapDragstart'
 ];
 
 @Component({
@@ -49,12 +57,14 @@ const OUTPUTS = [
   `,
 })
 export class Ng2MapComponent implements OnChanges, OnDestroy, AfterViewInit {
+  @Output() public mapReady$: EventEmitter<any> = new EventEmitter();
+
+  public mapIndex: number;
   public el: HTMLElement;
   public map: google.maps.Map;
   public mapOptions: google.maps.MapOptions = {};
 
   public inputChanges$ = new Subject();
-  public mapReady$: EventEmitter<any> = new EventEmitter();
 
   // map objects by group
   public infoWindows: any = {};
@@ -71,9 +81,15 @@ export class Ng2MapComponent implements OnChanges, OnDestroy, AfterViewInit {
     public zone: NgZone,
     public geolocation: NavigatorGeolocation,
     public geoCoder: GeoCoder,
-    public ng2Map: Ng2Map
+    public ng2Map: Ng2Map,
+    @Optional() @Inject(NG_MAP_CONFIG_TOKEN) private config
   ) {
-    if (typeof google === 'undefined' || !google.maps.Map) {
+    this.config = this.config || {apiUrl: 'https://maps.google.com/maps/api/js'};
+
+    window['ng2MapRef'] = window['ng2MapRef'] || [];
+    this.mapIndex = window['ng2MapRef'].length;
+    window['ng2MapRef'].push({ zone: this.zone, componentFn: () => this.initializeMap()});
+    if (typeof google === 'undefined' || typeof google.maps === 'undefined' || !google.maps.Map) {
       this.mapInitPath = 1;
       this.addGoogleMapsApi();
     }
@@ -94,17 +110,19 @@ export class Ng2MapComponent implements OnChanges, OnDestroy, AfterViewInit {
   }
 
   addGoogleMapsApi(): void {
-    window['ng2MapComponentRef'] = { zone: this.zone, componentFn: () => this.initializeMap()};
     window['initNg2Map'] = function() {
-      window['ng2MapComponentRef'].zone.run(function() { window['ng2MapComponentRef'].componentFn(); });
+      window['ng2MapRef'].forEach( ng2MapRef => {
+        ng2MapRef.zone.run(function() { ng2MapRef.componentFn(); });
+      });
+      window['ng2MapRef'] = [];
     };
-    if (!window['google'] && !document.querySelector('#ng2-map-api')) {
+    if ((!window['google'] || !window['google']['maps']) && !document.querySelector('#ng2-map-api')) {
       let script = document.createElement( 'script' );
       script.id = 'ng2-map-api';
 
       // script.src = "https://maps.google.com/maps/api/js?callback=initNg2Map";
-      let apiUrl = Ng2MapComponent['apiUrl'] || 'https://maps.google.com/maps/api/js';
-      apiUrl += apiUrl.indexOf('?') ? '&' : '?';
+      let apiUrl = this.config.apiUrl ;
+      apiUrl += apiUrl.indexOf('?') !== -1 ? '&' : '?';
       script.src = apiUrl + 'callback=initNg2Map';
       document.querySelector('body').appendChild(script);
     }
@@ -119,7 +137,7 @@ export class Ng2MapComponent implements OnChanges, OnDestroy, AfterViewInit {
     typeof this.mapOptions.center === 'string' && (delete this.mapOptions.center);
 
     this.map = new google.maps.Map(this.el, this.mapOptions);
-    this.map['mapObjectName'] = this.constructor['name'];
+    this.map['mapObjectName'] = 'Ng2MapComponent';
 
     if (!this.mapOptions.center) { // if center is not given as lat/lng
       this.setCenter();
@@ -139,21 +157,35 @@ export class Ng2MapComponent implements OnChanges, OnDestroy, AfterViewInit {
     this.inputChanges$
       .debounceTime(1000)
       .subscribe((changes: SimpleChanges) => this.ng2Map.updateGoogleObject(this.map, changes));
+
+    // expose map object for test and debugging on window
+    console.log('this.mapIndex', this.mapIndex);
+    window['ng2MapRef'].map = this.map;
   }
 
   setCenter(): void {
     if (!this['center']) { // center is not from user. Thus, we set the current location
-      this.geolocation.getCurrentPosition().subscribe(position => {
-        console.log('setting map center from current location');
-        let latLng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-        this.map.setCenter(latLng);
-      });
+      this.geolocation.getCurrentPosition().subscribe(
+        position => {
+          console.log('setting map center from current location');
+          let latLng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+          this.map.setCenter(latLng);
+        },
+        error => {
+          console.error('ng2-map: Error finding the current position');
+          this.map.setCenter(this.mapOptions['geoFallbackCenter'] || new google.maps.LatLng(0,0));
+        }
+      );
     }
     else if (typeof this['center'] === 'string') {
-      this.geoCoder.geocode({address: this['center']}).subscribe(results => {
-        console.log('setting map center from address', this['center']);
-        this.map.setCenter(results[0].geometry.location);
-      });
+      this.geoCoder.geocode({address: this['center']}).subscribe(
+        results => {
+          console.log('setting map center from address', this['center']);
+          this.map.setCenter(results[0].geometry.location);
+        },
+        error => {
+          this.map.setCenter(this.mapOptions['geoFallbackCenter'] || new google.maps.LatLng(0,0));
+        });
     }
   }
 
@@ -165,5 +197,19 @@ export class Ng2MapComponent implements OnChanges, OnDestroy, AfterViewInit {
     if (this.el) {
       OUTPUTS.forEach(output => google.maps.event.clearListeners(this.map, output));
     }
+  }
+
+  // map.markers, map.circles, map.heatmapLayers.. etc
+  addToMapObjectGroup(mapObjectName: string, mapObject: any) {
+    let groupName = toCamelCase(mapObjectName.toLowerCase()) + 's'; // e.g. markers
+    this.map[groupName] = this.map[groupName] || [];
+    this.map[groupName].push(mapObject);
+  }
+
+  removeFromMapObjectGroup(mapObjectName: string, mapObject: any) {
+    let groupName = toCamelCase(mapObjectName.toLowerCase()) + 's'; // e.g. markers
+    let index = this.map[groupName].indexOf(mapObject);
+    console.log('index', mapObject, index);
+    (index > -1) && this.map[groupName].splice(index, 1);
   }
 }

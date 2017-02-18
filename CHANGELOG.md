@@ -1,3 +1,31 @@
+# 0.15.0 (2017-01-23)
+
+  * added geo fallback options for map and marker
+  * **0.15.1 (2017-01-29)**
+    * Added more webtest
+  * **0.15.2 (2017-02-11)**
+    * Fixed a bug of geocode callback losing setMethod name
+    * Exposed `mapReady$` and `initialized$` as an Output
+  * **0.15.3 (2017-02-13)**
+    * Made available for both imports of `Ng2MapModule` and `Ng2MapModule.forRoot()`
+  * **0.15.4 (2017-02-16)**
+    * Upgraded webpack from 1.* tp 2.*
+    * Fixed multiple map instance not loading on the first page.
+  * **0.15.5 (2017-02-16)**
+    * Removed debug line
+
+# 0.14.0 (2017-01-12)
+
+  * new directive, custom-marker
+
+# 0.13.2 (2016-12-20)
+
+  * event parameter is changed from object to event. event.target is a google map object from now on.
+
+# 0.13.0 (2016-12-23)
+
+  * new directive, drawing-manager
+
 # 0.12.0 (2016-12-9)
 
   * new directive, directions-renderer

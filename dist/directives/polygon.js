@@ -22,7 +22,7 @@ var Polygon = (function (_super) {
     }
     Polygon.decorators = [
         { type: core_1.Directive, args: [{
-                    selector: 'ng2-map>polygon',
+                    selector: 'ng2-map>polygon, ng2-map>map-polygon',
                     inputs: INPUTS,
                     outputs: OUTPUTS,
                 },] },
