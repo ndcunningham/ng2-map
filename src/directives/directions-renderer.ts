@@ -1,8 +1,8 @@
-import { Input, Directive, SimpleChanges } from '@angular/core';
+import { Input, Directive, SimpleChanges, OnChanges, OnDestroy } from '@angular/core';
 
 import { BaseMapDirective } from './base-map-directive';
-import { Ng2MapComponent } from '../components/ng2-map.component';
-import { NavigatorGeolocation } from "../services/navigator-geolocation";
+import { NguiMapComponent } from '../components/ngui-map.component';
+import { NavigatorGeolocation } from '../services/navigator-geolocation';
 
 const INPUTS = [
   'directions', 'draggable', 'hideRouteList', 'infoWindow', 'panel', 'markerOptions',
@@ -12,21 +12,22 @@ const INPUTS = [
 const OUTPUTS = ['directions_changed'];
 
 @Directive({
-  selector: 'ng2-map > directions-renderer',
+  selector: 'ngui-map > directions-renderer',
   inputs: INPUTS,
   outputs: OUTPUTS,
 })
-export class DirectionsRenderer extends BaseMapDirective {
+export class DirectionsRenderer extends BaseMapDirective implements OnChanges, OnDestroy {
+  // tslint:disable-next-line
+  @Input('directions-request') directionsRequest: google.maps.DirectionsRequest;
+
   directionsService: google.maps.DirectionsService;
   directionsRenderer: google.maps.DirectionsRenderer;
 
-  @Input('directions-request') directionsRequest: google.maps.DirectionsRequest;
-
   constructor(
-    ng2MapComponent: Ng2MapComponent,
+    nguiMapComponent: NguiMapComponent,
     public geolocation: NavigatorGeolocation
   ) {
-    super(ng2MapComponent, 'DirectionsRenderer', INPUTS, OUTPUTS);
+    super(nguiMapComponent, 'DirectionsRenderer', INPUTS, OUTPUTS);
   }
 
   // only called when map is ready
@@ -41,21 +42,21 @@ export class DirectionsRenderer extends BaseMapDirective {
     this.directionsService = new google.maps.DirectionsService();
     this.directionsRenderer = new google.maps.DirectionsRenderer(this.objectOptions);
 
-    this.directionsRenderer.setMap(this.ng2MapComponent.map);
+    this.directionsRenderer.setMap(this.nguiMapComponent.map);
 
     // set google events listeners and emidirectionsRenderer to this outputs listeners
     this.showDirections(this.directionsRequest);
 
-    this.ng2Map.setObjectEvents(this.outputs, this, 'directionsRenderer');
+    this.nguiMap.setObjectEvents(this.outputs, this, 'directionsRenderer');
 
-    this.ng2MapComponent.addToMapObjectGroup(this.mapObjectName, this.mapObject);
+    this.nguiMapComponent.addToMapObjectGroup(this.mapObjectName, this.mapObject);
     this.initialized$.emit(this.directionsRenderer);
   }
 
 
   ngOnChanges(changes: SimpleChanges) {
     let newOptions = {};
-    for(var key in changes) {
+    for (let key in changes) {
       if (this.inputs.indexOf(key) !== -1) {
         newOptions[key] = this.optionBuilder.googlize(changes[key].currentValue);
       }
@@ -68,7 +69,13 @@ export class DirectionsRenderer extends BaseMapDirective {
   showDirections(directionsRequest: google.maps.DirectionsRequest) {
     this.directionsService.route(directionsRequest,
       (response: any, status: any) =>  {
-        if (status == google.maps.DirectionsStatus.OK) {
+        // in some-case the callback is called during destroy component,
+        // we should make sure directionsRenderer is still defined (cancelling `route` callback is not possible).
+        if (!this.directionsRenderer) {
+          return;
+        }
+
+        if (status === google.maps.DirectionsStatus.OK) {
           this.directionsRenderer.setDirections(response);
         } else {
           console.error('Directions request failed due to ' + status);
@@ -77,4 +84,8 @@ export class DirectionsRenderer extends BaseMapDirective {
     );
   }
 
+  ngOnDestroy() {
+    super.ngOnDestroy();
+    this.nguiMap.clearObjectEvents(this.outputs, this, 'directionsRenderer');
+  }
 }

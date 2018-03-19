@@ -17,14 +17,16 @@ import { HeatmapLayerComponent } from './map-components/heatmap-layer.component'
 import { KmlLayerComponent } from './map-components/kml-layer.component';
 import { DataLayerComponent } from './map-components/data-layer.component';
 import { StreetViewPanoramaComponent } from './map-components/street-view-panorama.component';
-import { PlacesAutoCompleteComponent } from './map-components/places-auto-compolete.component';
+import { PlacesAutoCompleteComponent } from './map-components/places-auto-complete.component';
 import { DirectionsRendererComponent } from './map-components/directions-renderer.component';
 import { DrawingManagerComponent } from './map-components/drawing-manager.component';
 import { EventArgumentsComponent } from './map-components/event-arguments.component';
 import { CustomMarkerComponent } from './map-components/custom-marker.component';
 import { CustomMarkerNgForComponent } from './map-components/custom-marker-ng-for.component';
-import { MapWithStreetviewComponent } from './map-components/map-with-streetview';
-import { MapChangeMultiplePropertiesComponent } from "./map-components/map-change-multiple-properties.component";
+import { MapWithStreetviewComponent } from './map-components/map-with-streetview.component';
+import { MapChangeMultiplePropertiesComponent } from './map-components/map-change-multiple-properties.component';
+import { MarkerWithCustomIconComponent } from './map-components/marker-with-custom-icon.component';
+import { ExperimentComponent } from './map-components/experiment.component';
 
 export const routes: Routes = [
   { path: 'bicycling-layer', component: BicyclingLayerComponent },
@@ -37,6 +39,7 @@ export const routes: Routes = [
   { path: 'map-with-streetview', component: MapWithStreetviewComponent },
   { path: 'map-change-multiple-properties', component: MapChangeMultiplePropertiesComponent },
   { path: 'marker-ng-for', component: MarkerNgForComponent },
+  { path: 'marker-with-custom-icon', component: MarkerWithCustomIconComponent},
   { path: 'multiple-map', component: MultipleMapComponent },
   { path: 'places-auto-complete', component: PlacesAutoCompleteComponent },
   { path: 'polygon', component: PolygonComponent },
@@ -52,6 +55,7 @@ export const routes: Routes = [
   { path: 'event-arguments', component: EventArgumentsComponent },
   { path: 'custom-marker', component: CustomMarkerComponent },
   { path: 'custom-marker-ng-for', component: CustomMarkerNgForComponent },
+  { path: 'experiment', component: ExperimentComponent },
   { path: '',  redirectTo: '/simple-marker', pathMatch: 'full' },
 ];
 
@@ -81,6 +85,8 @@ export const APP_ROUTER_COMPONENTS = [
   TrafficLayerComponent,
   TransitLayerComponent,
   CustomMarkerComponent,
-  CustomMarkerNgForComponent
+  CustomMarkerNgForComponent,
+  MarkerWithCustomIconComponent,
+  ExperimentComponent
 ];
 

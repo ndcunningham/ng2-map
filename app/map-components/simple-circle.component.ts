@@ -1,33 +1,26 @@
 import { Component } from '@angular/core';
+import { SourceCodeService } from '../source-code.service';
 
-let templateStr: string = `
-  <h1>Simple Circle</h1>
-  <ng2-map center="Brampton, Canada" scrollwheel="false">
-    <circle center="Brampton, Canada"
-      [strokeColor]="'#FF0000'"
-      [strokeOpacity]="0.8"
-      [strokeWeight]="2"
-      [editable]="true"
-      radius="100"
-      draggable="true"></circle>
-  </ng2-map>
-  <ng2-map center="Brampton, Canada" scrollwheel="false">
-    <map-circle center="Brampton, Canada"
-      [strokeColor]="'#FF0000'"
-      [strokeOpacity]="0.8"
-      [strokeWeight]="2"
-      [editable]="true"
-      radius="100"
-      draggable="true"></map-circle>
-  </ng2-map>
-  <code>
-    <br/><b>HTML</b>
-    <pre>{{templateStr | htmlCode:'-code'}}</pre>
-  </code>
-`;
 @Component({
-  template: templateStr
+  template: `
+    <h1>Simple Circle</h1>
+    <ngui-map center="Brampton, Canada" scrollwheel="false">
+      <circle center="Brampton, Canada"
+        [strokeColor]="'#FF0000'"
+        [strokeOpacity]="0.8"
+        [strokeWeight]="2"
+        [editable]="true"
+        radius="100"
+        draggable="true"></circle>
+    </ngui-map>
+
+    <button (click)="sc.plnkr(code)">See in plunker</button>
+
+    <pre class="prettyprint">{{code}}</pre>`
 })
 export class SimpleCircleComponent {
-  templateStr: string = templateStr;
+  code: string;
+  constructor(public sc: SourceCodeService) {
+    sc.getText('SimpleCircleComponent').subscribe(text => this.code = text);
+  }
 }

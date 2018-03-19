@@ -1,7 +1,7 @@
 import { Directive } from '@angular/core';
 
 import { BaseMapDirective } from './base-map-directive';
-import { Ng2MapComponent } from '../components/ng2-map.component';
+import { NguiMapComponent } from '../components/ngui-map.component';
 
 const INPUTS = [
   'clickable', 'draggable', 'editable', 'geodesic', 'icons', 'path', 'strokeColor',
@@ -13,13 +13,13 @@ const OUTPUTS = [
 ];
 
 @Directive({
-  selector: 'ng2-map > polyline',
+  selector: 'ngui-map > polyline',
   inputs: INPUTS,
   outputs: OUTPUTS,
 })
 export class Polyline extends BaseMapDirective {
-  constructor(ng2MapComp: Ng2MapComponent) {
-    super(ng2MapComp, 'Polyline', INPUTS, OUTPUTS);
+  constructor(nguiMapComp: NguiMapComponent) {
+    super(nguiMapComp, 'Polyline', INPUTS, OUTPUTS);
   }
 }
 

@@ -1,12 +1,8 @@
 {
-  "rulesDirectory": "node_modules/codelyzer",
+  "rulesDirectory": ["node_modules/codelyzer"],
   "rules": {
-    "directive-selector-name": [false, "camelCase"],
-    "component-selector-name": [false, "kebab-case"],
-    "directive-selector-type": [false, "attribute"],
-    "component-selector-type": [true, "element"],
-    "directive-selector-prefix": [false, "ng2-map"],
-    "component-selector-prefix": [false, "ng2-map"],
+    "directive-selector": [false, "attribute", ["ngui-map"], "camelCase"],
+    "component-selector": [true, "element", ["ngui-map", "custom", "info"], "kebab-case"],
     "use-input-property-decorator": false,
     "use-output-property-decorator": false,
     "use-host-property-decorator": true,
@@ -16,12 +12,8 @@
     "no-forward-ref" : true,
     "use-life-cycle-interface": true,
     "use-pipe-transform-interface": true,
-    "pipe-naming": [false, "camelCase", "ng2-map"],
-    "component-class-suffix": false,
-    "directive-class-suffix": false,
-    "import-destructuring-spacing": true,
-    "templates-use-public": true,
-    "invoke-injectable": true,
+    "pipe-naming": [false, "camelCase", "ngui-map"],
+    "import-spacing": true,
     "class-name": true,
     "comment-format": [true, "check-space"],
     "indent": [true, "spaces"],
@@ -37,13 +29,7 @@
     "no-eval": true,
     "no-internal-module": true,
     "no-trailing-whitespace": true,
-    "trailing-comma": [
-      true,
-      {
-        "multiline": "always",
-        "singleline": "never"
-      }
-    ],
+    "trailing-comma": [false],
     "no-var-keyword": true,
     "one-line": [
       true,

@@ -1,7 +1,7 @@
-import { Directive } from '@angular/core';
+import {Directive, OnDestroy} from '@angular/core';
 
 import { BaseMapDirective } from './base-map-directive';
-import { Ng2MapComponent } from '../components/ng2-map.component';
+import { NguiMapComponent } from '../components/ngui-map.component';
 
 const INPUTS = [
   'selector', 'options',
@@ -16,13 +16,13 @@ const OUTPUTS = [
 ];
 
 @Directive({
-  selector: 'ng2-map > street-view-panorama',
+  selector: 'ngui-map > street-view-panorama',
   inputs: INPUTS,
   outputs: OUTPUTS,
 })
-export class StreetViewPanorama extends BaseMapDirective {
-  constructor(ng2MapComp: Ng2MapComponent) {
-    super(ng2MapComp, 'StreetViewPanorama', INPUTS, OUTPUTS);
+export class StreetViewPanorama extends BaseMapDirective implements OnDestroy {
+  constructor(nguiMapComp: NguiMapComponent) {
+    super(nguiMapComp, 'StreetViewPanorama', INPUTS, OUTPUTS);
   }
 
   // only called when map is ready
@@ -32,11 +32,11 @@ export class StreetViewPanorama extends BaseMapDirective {
 
     let element: HTMLElement;
     if (this.objectOptions.selector) {
-      //noinspection TypeScriptValidateTypes
+      // noinspection TypeScriptValidateTypes
       element = document.querySelector(this['selector']);
       delete this.objectOptions.selector;
     } else {
-      element = this.ng2MapComponent.el;
+      element = this.nguiMapComponent.el;
     }
 
     // will be set after geocoded
@@ -44,19 +44,19 @@ export class StreetViewPanorama extends BaseMapDirective {
 
     this.mapObject = new google.maps[this.mapObjectName](element, this.objectOptions);
     this.mapObject['mapObjectName'] = this.mapObjectName;
-    this.mapObject['ng2MapComponent'] = this.ng2MapComponent;
+    this.mapObject['nguiMapComponent'] = this.nguiMapComponent;
 
     // set google events listeners and emits to this outputs listeners
-    this.ng2Map.setObjectEvents(this.outputs, this, 'mapObject');
+    this.nguiMap.setObjectEvents(this.outputs, this, 'mapObject');
 
-    this.ng2MapComponent.addToMapObjectGroup(this.mapObjectName, this.mapObject);
+    this.nguiMapComponent.addToMapObjectGroup(this.mapObjectName, this.mapObject);
     this.initialized$.emit(this.mapObject);
   }
 
   // When destroyed, remove event listener, and delete this object to prevent memory leak
   ngOnDestroy() {
-    if (this.ng2MapComponent.el) {
-      OUTPUTS.forEach(output => google.maps.event.clearListeners(this.mapObject, output));
+    if (this.nguiMapComponent.el) {
+      this.nguiMap.clearObjectEvents(this.outputs, this, 'mapObject');
     }
   }
 }

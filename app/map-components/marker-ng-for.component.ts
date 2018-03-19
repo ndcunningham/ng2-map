@@ -1,32 +1,29 @@
 import { Component } from '@angular/core';
-import { Observable } from "rxjs/Observable";
+import { Observable } from 'rxjs/Observable';
+import { SourceCodeService } from '../source-code.service';
 import 'rxjs/add/observable/of';
 
-let templateStr = `
-  <h1>Marker Wigh *ngFor</h1>
-  <ng2-map zoom="13" center="Brampton, Canada">
-    <marker *ngFor="let pos of positions" [position]="pos"></marker>
-  </ng2-map>
-  <button (click)="positions = getRandomMarkers()">Show Random Markers</button> <br/>
-  <button (click)="showMarkersFromObservable()">Show Random Markers From Observable</button>
-  <code>
-   <br/><b>HTML</b>
-    <pre>{{templateStr | htmlCode:'-code'}}</pre>
-    <b>function getRandomMarkers</b> 
-    <pre>{{getRandomMarkers | jsCode}}</pre>
-    <b>function showMarkersFromObservable</b> 
-    <pre>{{showMarkersFromObservable | jsCode}}</pre>
-  </code>
-`;
 @Component({
-  template: templateStr
-})
+  template: `
+    <h1>Marker Wigh *ngFor</h1>
+    <ngui-map zoom="13" center="Brampton, Canada">
+      <marker *ngFor="let pos of positions" [position]="pos"></marker>
+    </ngui-map>
+    <button (click)="positions = getRandomMarkers()">Show Random Markers</button> <br/>
+    <button (click)="showMarkersFromObservable()">Show Random Markers From Observable</button>
+
+    <button (click)="sc.plnkr(code)">See in plunker</button>
+
+    <pre class="prettyprint">{{code}}</pre>
+  `})
 export class MarkerNgForComponent {
   public positions= [];
 
-  templateStr: string = templateStr;
-  constructor() {
+  code: string;
+
+  constructor(public sc: SourceCodeService) {
     this.positions = this.getRandomMarkers();
+    sc.getText('MarkerNgForComponent').subscribe(text => this.code = text);
   }
 
   getRandomMarkers() {
@@ -45,6 +42,6 @@ export class MarkerNgForComponent {
     Observable.of(this.getRandomMarkers()) // Think this as http call
       .subscribe( positions => {
         this.positions = positions;
-      })
+      });
   }
 }
